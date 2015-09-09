@@ -52,6 +52,23 @@ def cholesky_decomp(A):
     return L, L.T
 
 
+def conjugate_gradients(A, b, x0, tol = 1e-3):
+    d_curr = r_curr = b - np.dot(A, x0)
+    x_curr = x0
+    while np.linalg.norm(r_curr) > tol * np.linalg.norm(b):
+        Ad = np.dot(A, d_curr)
+        alpha = np.dot(r_curr, r_curr) / np.dot(d_curr, Ad)
+        x_next = x_curr + alpha * d_curr
+        r_next = r_curr - alpha * Ad
+        beta = np.dot(r_next, r_next) / np.dot(r_curr, r_curr)
+        d_next = r_next + beta * d_curr
+
+        d_curr = d_next
+        r_curr = r_next
+        x_curr = x_next
+    return x_curr
+
+
 def solve(L, R, b):
     if L.shape != R.shape:
         raise ValueError('L and R must have equal shapes')
@@ -108,6 +125,14 @@ def main(args):
     x = solve(L, R, b)
     duration = timeit.default_timer() - start
     print('correct result' if np.allclose(np.dot(A, x), b) else 'wrong result')
+    print('done, took %fs' % duration)
+    print('')
+
+    print('solving with conjungate gradients ...')
+    start = timeit.default_timer()
+    x = conjugate_gradients(A, b, np.random.random(b.shape), tol=1e-5)
+    duration = timeit.default_timer() - start
+    print('correct result' if np.allclose(np.dot(A, x), b,  rtol=1e-2) else 'wrong result')
     print('done, took %fs' % duration)
 
 
