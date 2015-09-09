@@ -56,13 +56,20 @@ def conjugate_gradients(A, b, x0, tol = 1e-3):
     d_curr = r_curr = b - np.dot(A, x0)
     x_curr = x0
     while np.linalg.norm(r_curr) > tol * np.linalg.norm(b):
-        Ad = np.dot(A, d_curr)
+        Ad = np.dot(A, d_curr)  # pre-calculate to avoid computing it twice
+
+        # Compute alpha such that x_curr + alpha * d_curr, i.e. going from x_curr in the search direction d_curr
+        # minimizes the distance between the solution in that single dimension.
         alpha = np.dot(r_curr, r_curr) / np.dot(d_curr, Ad)
         x_next = x_curr + alpha * d_curr
+
+        # Select the next search direction by computing the residual error first and then using the component of the
+        # error that is orthogonal to the current search direction as the new direction.
         r_next = r_curr - alpha * Ad
         beta = np.dot(r_next, r_next) / np.dot(r_curr, r_curr)
         d_next = r_next + beta * d_curr
 
+        # Bookkeeping.
         d_curr = d_next
         r_curr = r_next
         x_curr = x_next
