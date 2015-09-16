@@ -4,6 +4,28 @@ import numpy as np
 from scipy.linalg import lu_factor, lu_solve
 
 
+def check_jacobian(x0, func, jacobian, eps=1e-5):
+	if x0.ndim != 1:
+		raise ValueError('x0 must be a vector')
+
+	# Compute analytic gradients
+	J = jacobian(x0)
+	n_out, n_in = J.shape
+	if x0.shape[0] != n_in:
+		raise ValueError('x0 must match Jacobian')
+
+	# Compute approximate Jacobian
+	approx_J = np.zeros(J.shape)
+	for col_idx in xrange(n_in):
+		left = np.copy(x0)
+		right = np.copy(x0)
+		left[col_idx] -= eps
+		right[col_idx] += eps
+		approx = (func(right) - func(left)) / (2. * eps)
+		approx_J[:, col_idx] = approx
+	return np.allclose(J, approx_J)
+
+
 def newton(x0, func, jacobian, tol=1e-2, verbose=False):
 	dx = None
 	x = np.copy(x0)
@@ -36,6 +58,9 @@ def main():
 	jacobian = lambda x: np.array([[1. / (2. * np.sqrt(x[0])), -np.cos(x[1])],
 								   [2. * x[0], 				   2. * x[1]]])
 	x0 = np.array([.5, np.pi / 2.])
+
+	if not check_jacobian(np.random.random(2), func, jacobian):
+		exit('Jacobian seems to be wrong')
 
 	print('solving using Newton ...')
 	start = timeit.default_timer()
